@@ -2,6 +2,7 @@ import org.apache.commons.codec.digest.DigestUtils;
 
 import java.io.*;
 import java.nio.file.Files;
+import java.util.*;
 import java.util.zip.DeflaterOutputStream;
 import java.util.zip.InflaterInputStream;
 
@@ -22,6 +23,9 @@ public class Main {
       }
       case "hash-object" -> {
         hashObjectCommand(args);
+      }
+      case "ls-tree" -> {
+        lsTreeCommand(args);
       }
       default -> System.out.println("Unknown command: " + command);
     }
@@ -82,5 +86,41 @@ public class Main {
     catch (IOException e) {
       e.printStackTrace();
     }
+  }
+
+  private static void lsTreeCommand(String[] args) {
+    // first we need to get the directory and file name from the hash
+    // content of tree:
+    // tree <size>\0
+    // <mode> <name>\0<20_byte_sha>
+    String treeDirectory = args[2].substring(0, 2);
+    String treeFile = args[2].substring(2);
+    String treePath = ".git/objects/" + treeDirectory + "/" + treeFile;
+    File f = new File(treePath);
+    try {
+      // open the file, decompress and read
+      BufferedReader bf = new BufferedReader(new InputStreamReader(new InflaterInputStream(new FileInputStream(f))));
+      String content = bf.readLine();
+      content = content.substring(content.indexOf("\0") + 1); // get read of the header
+
+      List<String> names = new ArrayList<>();
+      String[] lines;
+      String modesRegex = "40000|120000|100755|100644";
+      lines = content.split(modesRegex); // here we get the mode name and sha
+      for(String line : lines) {
+        if(!line.isEmpty())
+          names.add(line.substring(0, line.indexOf("\0")).trim());
+      }
+      Collections.sort(names);
+      for (String name: names) {
+        System.out.println(name);
+      }
+
+    }
+    catch (IOException e) {
+      e.printStackTrace();
+    }
+
+
   }
 }
