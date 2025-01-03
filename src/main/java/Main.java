@@ -15,62 +15,72 @@ public class Main {
 
     switch (command) {
       case "init" -> {
-        final File root = new File(".git");
-        new File(root, "objects").mkdirs();
-        new File(root, "refs").mkdirs();
-        final File head = new File(root, "HEAD");
-
-        try {
-          head.createNewFile();
-          Files.write(head.toPath(), "ref: refs/heads/main\n".getBytes());
-          System.out.println("Initialized git directory");
-        } catch (IOException e) {
-          throw new RuntimeException(e);
-        }
+        initCommand(args);
       }
       case "cat-file" -> {
-        String hash = args[2];
-        String dirHash = hash.substring(0, 2); // first 2 for the directory
-        String fileHash = hash.substring(2); // the rest for the file name
-        // we need to read fileHash from the directory dirHash from .git/objects/
-        File blobFile = new File(".git/objects/" + dirHash + "/" + fileHash);
-        try {
-          // FileInputStream -> read raw file bytes
-          // InflaterInputStream -> decompress the bytes
-          // InputStreamReader -> converts bytes to chars
-          // BufferedReader -> buffers the characters
-          String blob = new BufferedReader(new InputStreamReader(new InflaterInputStream(new FileInputStream(blobFile)))).readLine();
-          String content = blob.substring(blob.indexOf("\0") + 1);
-          System.out.print(content); // System.out.println has \n at the end
-        }
-        catch (IOException e) {
-          e.printStackTrace();
-        }
+        catFileCommand(args);
       }
       case "hash-object" -> {
-        String fileName = args[2];
-        try {
-          String fileContent = new BufferedReader(new FileReader(fileName)).readLine();
-          String blobHeader = "blob " + fileContent.length() + "\0";
-          String blobContent = blobHeader + fileContent;
-          String sha1hex = DigestUtils.sha1Hex(blobContent);
-          System.out.println(sha1hex); // print the hash
-          String directory = sha1hex.substring(0, 2);
-          String file = sha1hex.substring(2);
-          File f = new File(".git/objects/" + directory + "/" + file);
-          f.getParentFile().mkdirs();
-          f.createNewFile();
-          try (OutputStream fos = new FileOutputStream(f); DeflaterOutputStream dos = new DeflaterOutputStream(fos)) {
-            dos.write(blobContent.getBytes());
-          }
-        }
-        catch (IOException e) {
-          e.printStackTrace();
-        }
-
-
+        hashObjectCommand(args);
       }
       default -> System.out.println("Unknown command: " + command);
+    }
+  }
+
+  private static void initCommand(String[] args) {
+    final File root = new File(".git");
+    new File(root, "objects").mkdirs();
+    new File(root, "refs").mkdirs();
+    final File head = new File(root, "HEAD");
+
+    try {
+      head.createNewFile();
+      Files.write(head.toPath(), "ref: refs/heads/main\n".getBytes());
+      System.out.println("Initialized git directory");
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  private static void catFileCommand(String[] args) {
+    String hash = args[2];
+    String dirHash = hash.substring(0, 2); // first 2 for the directory
+    String fileHash = hash.substring(2); // the rest for the file name
+    // we need to read fileHash from the directory dirHash from .git/objects/
+    File blobFile = new File(".git/objects/" + dirHash + "/" + fileHash);
+    try {
+      // FileInputStream -> read raw file bytes
+      // InflaterInputStream -> decompress the bytes
+      // InputStreamReader -> converts bytes to chars
+      // BufferedReader -> buffers the characters
+      String blob = new BufferedReader(new InputStreamReader(new InflaterInputStream(new FileInputStream(blobFile)))).readLine();
+      String content = blob.substring(blob.indexOf("\0") + 1);
+      System.out.print(content); // System.out.println has \n at the end
+    }
+    catch (IOException e) {
+      e.printStackTrace();
+    }
+  }
+
+  private static void hashObjectCommand(String[] args) {
+    String fileName = args[2];
+    try {
+      String fileContent = new BufferedReader(new FileReader(fileName)).readLine();
+      String blobHeader = "blob " + fileContent.length() + "\0";
+      String blobContent = blobHeader + fileContent;
+      String sha1hex = DigestUtils.sha1Hex(blobContent);
+      System.out.println(sha1hex); // print the hash
+      String directory = sha1hex.substring(0, 2);
+      String file = sha1hex.substring(2);
+      File f = new File(".git/objects/" + directory + "/" + file);
+      f.getParentFile().mkdirs();
+      f.createNewFile();
+      try (OutputStream fos = new FileOutputStream(f); DeflaterOutputStream dos = new DeflaterOutputStream(fos)) {
+        dos.write(blobContent.getBytes());
+      }
+    }
+    catch (IOException e) {
+      e.printStackTrace();
     }
   }
 }
