@@ -59,6 +59,8 @@ abstract class GitObject {
                 return new BlobObject("100644", size, data);
             } else if (type.equals("tree")) {
                 return new TreeObject("40000", size, data);
+            } else if (type.equals("commit")) {
+                return new CommitObject(size, data);
             } else {
                 throw new IllegalArgumentException("Unknown object type: " + type);
             }

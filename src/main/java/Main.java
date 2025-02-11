@@ -1,13 +1,6 @@
-import org.apache.commons.codec.binary.Hex;
-import org.apache.commons.codec.digest.DigestUtils;
-
 import java.io.*;
-import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.*;
-import java.util.zip.DeflaterOutputStream;
-import java.util.zip.InflaterInputStream;
+
 
 public class Main {
     public static void main(String[] args) {
@@ -28,6 +21,9 @@ public class Main {
                 }
                 case "write-tree" -> {
                     writeTreeCommand();
+                }
+                case "commit-tree" -> {
+                    commitTreeCommand(args);
                 }
                 default -> System.out.println("Unknown command: " + command);
             }
@@ -82,5 +78,18 @@ public class Main {
             tree.writeObject();
             System.out.println(tree.getHashHex());
         }
+    }
+
+    private static void commitTreeCommand(String[] args) throws IOException {
+        // commit-tree <tree_sha> -p <commit_sha> -m <message>
+        String treeShaHex = args[1];
+        String commitShaHex = args[3];
+        String message = args[5];
+        String author = "Jane Doe";
+        String committer = "Jane Doe";
+
+        CommitObject commit = CommitObject.generateCommitContent(treeShaHex, commitShaHex, message, author, committer);
+        commit.writeObject();
+        System.out.println(commit.getHashHex());
     }
 }

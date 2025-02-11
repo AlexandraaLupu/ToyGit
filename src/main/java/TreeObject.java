@@ -1,5 +1,3 @@
-import org.apache.commons.codec.digest.DigestUtils;
-
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
